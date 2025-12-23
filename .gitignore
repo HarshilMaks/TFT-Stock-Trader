@@ -1,0 +1,98 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+.uv/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite3
+*.sql
+
+# Logs
+logs/
+*.log
+
+# ML Models & Data
+data/raw/*
+data/processed/*
+data/models/*.h5
+data/models/*.pkl
+data/models/*.joblib
+data/models/*.pth
+*.h5
+*.pkl
+*.joblib
+*.pth
+
+# Keep directories but ignore contents
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/models/.gitkeep
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Alembic
+alembic/versions/*.pyc
+
+# Redis dump
+dump.rdb
+
+# Node (Frontend)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.cache/
+frontend/.turbo/
+
+# Next.js
+frontend/.env*.local
+frontend/.vercel
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
