@@ -8,3 +8,5 @@ python-dotenv
 pydantic-settings
 praw
 pandas
+vaderSentiment
+APScheduler

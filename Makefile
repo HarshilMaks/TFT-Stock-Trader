@@ -25,8 +25,11 @@ help:
 	@echo "  make docker-logs     - View docker logs"
 	@echo ""
 	@echo "Data & ML:"
-	@echo "  make scrape-reddit   - Run Reddit scraper"
+	@echo "  make scrape-reddit   - Run Reddit scraper (one-time)"
+	@echo "  make scrape-scheduled - Run automated scheduled scraper"
+	@echo "  make scrape-once     - Test scraper (single run)"
 	@echo "  make train-models    - Train ML models"
+	@echo "  make backtest        - Run backtesting"
 	@echo "  make backtest        - Run backtesting"
 	@echo ""
 	@echo "Code Quality:"
@@ -98,6 +101,12 @@ docker-logs:
 # Data Collection & ML
 scrape-reddit:
 	uv run python scripts/scrape_reddit.py
+
+scrape-scheduled:
+	uv run python scripts/scheduled_scraper.py
+
+scrape-once:
+	uv run python scripts/scheduled_scraper.py --once
 
 train-models:
 	uv run python scripts/train_models.py
