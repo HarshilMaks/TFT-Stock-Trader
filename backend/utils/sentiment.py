@@ -3,7 +3,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 class SentimentAnalyzer:
     """
-    Analyze sentiment of Reddit posts using VADER (Valence Aware Dictionary and sEntiment Reasoner).
+    Analyze sentiment of Reddit posts using VADER (Valence Aware Dictionary and Sentiment Reasoner).
     
     VADER is specifically attuned to sentiments expressed in social media and works well for:
     - Stock market language (bullish, bearish, moon, crash, etc.)
