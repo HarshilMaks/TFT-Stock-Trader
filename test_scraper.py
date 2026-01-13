@@ -1,5 +1,5 @@
 import asyncio
-from backend.database.config import async_session
+from backend.database.config import AsyncSessionLocal
 from backend.services.reddit_service import RedditService
 
 
@@ -8,8 +8,8 @@ async def test():
     
     print("🚀 Starting Reddit scraper test...")
     
-    async with async_session() as db:
-        stats = await service.scrape_and_save(db, 'wallstreetbets', limit=50)
+    async with AsyncSessionLocal() as db:
+        stats = await service.scrape_and_save(db, subreddits=['wallstreetbets'], limit=50)
         
         print("\n✅ Scraping complete!")
         print(f"📊 Stats:")

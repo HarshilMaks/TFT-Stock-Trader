@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional, Literal
 from backend.models.reddit import RedditPost
-from backend.scrapers.reddit_scraper import RedditScraper, PostType
+from backend.scrapers.mock_reddit import MockRedditScraper as RedditScraper, PostType
 from backend.utils.ticker_extractor import extract_tickers
 from backend.utils.sentiment import analyze_sentiment
 
