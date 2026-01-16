@@ -75,14 +75,14 @@ migrate-down:
 	uv run alembic downgrade -1
 
 # Run Application
-run app:
+app:
 	@if [ ! -s backend/api/main.py ]; then \
 		echo "❌ Error: backend/api/main.py is empty. Create FastAPI app first."; \
 		exit 1; \
 	fi
 	uv run uvicorn backend.api.main:app --reload --host 0.0.0.0 --port 8000
 
-run front:
+frontend:
 	cd frontend && npm run dev
 
 # Docker
