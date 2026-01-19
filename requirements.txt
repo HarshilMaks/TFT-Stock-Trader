@@ -10,3 +10,7 @@ praw
 pandas
 vaderSentiment
 APScheduler
+yfinance
+pandas-ta
+redis
+celery
