@@ -17,12 +17,19 @@ class StockPrice(Base):
     adjusted_close = Column(Float, nullable=False)
     volume = Column(BigInteger, nullable=False)
     
-    # Technical Indicators
+    # Technical Indicators - Momentum
     rsi = Column(Float, nullable=True)
     macd = Column(Float, nullable=True)
     macd_signal = Column(Float, nullable=True)
     bb_upper = Column(Float, nullable=True)
     bb_lower = Column(Float, nullable=True)
+    
+    # Moving Averages - Swing Trading
+    sma_50 = Column(Float, nullable=True)
+    sma_200 = Column(Float, nullable=True)
+    
+    # Volume Indicators
+    volume_ratio = Column(Float, nullable=True)  # Current volume / 20-day avg
     
     # Timestamps
     date = Column(DateTime(timezone=True), nullable=False)

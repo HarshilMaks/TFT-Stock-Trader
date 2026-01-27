@@ -1,158 +1,301 @@
-Understood. Here is a **clean, professional, production-grade README** with **no emojis**, no fluff, and written at an **industry standard** suitable for recruiters, senior engineers, and reviewers.
+# TFT Trader
 
-You can paste this directly into `README.md`.
+**Algorithmic Swing Trading Platform with ML-Driven Sentiment Analysis**
 
----
+TFT Trader is a production-grade, full-stack trading system that combines Reddit sentiment analysis with technical momentum indicators to generate algorithmic swing trading signals. The platform uses an ensemble ML approach (LSTM, XGBoost, LightGBM) with strict risk management to target 60-65% win rates on 3-7 day trades.
 
-# TFT-Sentiment-Trader
-
-## Production-Grade Stock Sentiment & Prediction Platform
-
-TFT-Sentiment-Trader is a full-stack, machine-learning–driven system that ingests real-time Reddit sentiment and financial market data, processes it through a scalable backend, and serves stock direction predictions via low-latency APIs and a real-time dashboard.
-
-This project is intentionally designed to mirror **industry-level backend and ML systems** used in fintech and data-driven trading platforms.
+**Project Status:** Active Development | Week 2 of 12  
+**Strategy:** Swing + Momentum Trading  
+**Tech Stack:** FastAPI, PostgreSQL, PyTorch, Next.js
 
 ---
 
-## Purpose
+## Overview
 
-The goal of this project is twofold:
+### Core Concept
 
-1. Build a **realistic, production-grade backend system** using modern Python, async APIs, background workers, and proper system boundaries.
-2. Implement an **end-to-end ML pipeline** (data ingestion → feature engineering → training → inference → serving) that can be monitored, versioned, and scaled.
+Capture short-term momentum opportunities by combining:
+- **Reddit sentiment analysis** (early detection of retail investor momentum)
+- **Technical indicators** (RSI, MACD, Bollinger Bands, moving averages)
+- **Ensemble ML predictions** (multiple models voting for robustness)
+- **Automated risk management** (position sizing, stop-loss, confidence filtering)
 
-This is not a demo project.
-It is a learning-driven, production-oriented system built with real engineering trade-offs.
+### Key Differentiators
+
+1. **Early Sentiment Detection** - Reddit signals momentum before mainstream news
+2. **Multi-Model Ensemble** - LSTM + XGBoost + LightGBM reduce overfitting
+3. **Risk-First Design** - Every signal validated by risk manager before execution
+4. **Production Architecture** - Async APIs, background tasks, proper observability
 
 ---
 
-## High-Level Architecture
+## Architecture
 
-### Data Sources
+### System Design
 
-* Reddit API (sentiment signals)
-* Yahoo Finance (price data)
-* News API (event context)
-* OpenAI API (LLM-based sentiment classification)
+```
+Data Ingestion → Feature Engineering → ML Prediction → Risk Validation → Signal Generation
+      ↓                  ↓                   ↓                ↓                 ↓
+  PostgreSQL         Database           Ensemble         Risk Manager      Frontend
+   + Redis                              Models                            Dashboard
+```
 
-### Backend
+**Data Layer**
+- Reddit scraper (PRAW) with custom VADER sentiment lexicon
+- Stock scraper (yfinance) with technical indicators
+- PostgreSQL for persistence, Redis for caching
 
-* FastAPI (async REST + WebSocket APIs)
-* PostgreSQL + TimescaleDB (relational + time-series storage)
-* Redis (cache and task broker)
-* Celery + Celery Beat (background jobs and scheduling)
-* SQLAlchemy (async ORM)
-* Alembic (schema migrations)
+**ML Layer**
+- LSTM (30%) - Sequence patterns over 30-day windows
+- XGBoost (40%) - Feature importance, most reliable
+- LightGBM (30%) - Fast inference
+- Ensemble voting with 70%+ confidence threshold
 
-### Machine Learning
+**Risk Layer**
+- Position sizing: Max 20% per position, 2% risk per trade
+- Stop-loss: Automatic -5% exit
+- Confidence filtering: Only trade signals >70% probability
+- Portfolio constraints: Max 5 concurrent positions, 15% drawdown limit
 
-* Temporal Fusion Transformer (TFT)
-* XGBoost
-* LightGBM
-* Stacking ensemble
-* Confidence filtering and regime detection
-* MLflow for experiment tracking and model versioning
+**API Layer**
+- FastAPI with async operations
+- REST endpoints for historical data
+- WebSocket for real-time updates (future)
 
-### Frontend
+### Technology Stack
 
-* Next.js 15 (App Router)
-* TypeScript
-* Tailwind CSS
-* TradingView widgets and charts
-* Zustand for state management
-* Real-time updates via WebSockets
+**Backend:** FastAPI, PostgreSQL, SQLAlchemy 2.0, Alembic, Celery, Redis  
+**ML:** PyTorch (LSTM), XGBoost, LightGBM, pandas-ta  
+**Data:** yfinance, PRAW, vaderSentiment  
+**Frontend:** Next.js 15, TypeScript, Tailwind, TradingView  
+**DevOps:** Docker, GitHub Actions, Railway/Render, Vercel
 
-### DevOps & Observability
+---
 
-* Docker and Docker Compose
-* GitHub Actions (CI/CD)
-* MLflow (model tracking)
-* Prometheus and Grafana (metrics)
-* Sentry (error monitoring)
+## Features
+
+### Implemented (Week 1-2)
+
+**Reddit Sentiment Engine**
+- Multi-subreddit scraping (r/wallstreetbets, r/stocks, r/investing)
+- Custom VADER lexicon with 40+ stock market terms
+- Ticker extraction from post text
+- Sentiment scoring with engagement metrics
+
+**Stock Data Pipeline**
+- OHLCV data from Yahoo Finance
+- Technical indicators: RSI, MACD, Bollinger Bands, SMA 50/200, Volume Ratio
+- 3-month historical lookback for moving averages
+- Async scraping with error handling
+
+**REST API**
+- `GET /posts/` - Paginated Reddit posts with sentiment
+- `GET /posts/ticker/{ticker}` - Filter posts by stock symbol
+- `GET /posts/trending` - Most mentioned tickers
+- `GET /posts/sentiment/{ticker}` - Aggregate sentiment metrics
+- `GET /health` - Database connectivity check
+
+**Database Schema**
+- `reddit_posts` - Sentiment, tickers, engagement
+- `stock_prices` - OHLCV + momentum indicators
+- `trading_signals` - BUY/SELL/HOLD with risk parameters
+
+### Planned (Week 3-12)
+
+**Week 3-4: ML Pipeline**
+- Feature engineering (45 features combining price + sentiment)
+- LSTM training on sequence data
+- XGBoost/LightGBM training on feature vectors
+- Ensemble voting system
+- Backtesting framework on 3-year historical data
+
+**Week 5-6: Trading Logic**
+- Risk manager implementation
+- Signal generation with entry/exit logic
+- Position sizing calculator
+- Stop-loss/target automation
+- Performance tracking
+
+**Week 7-10: Frontend**
+- Dashboard with trending stocks
+- TradingView price charts
+- Sentiment timeline visualization
+- Active signals display
+- Portfolio tracking (P&L, win rate)
+- WebSocket real-time updates
+
+**Week 11-12: Production**
+- Docker containerization
+- CI/CD pipeline
+- Error monitoring (Sentry)
+- Deployment to Railway + Vercel
+
+---
+
+## Trading Strategy
+
+### Entry Criteria (BUY Signal)
+
+All conditions must align:
+
+**Technical Momentum**
+- RSI < 35 (oversold with reversal potential)
+- MACD > Signal (bullish crossover)
+- Close > SMA 50 (price above support)
+- Volume > 1.5x average (momentum confirmation)
+
+**Sentiment Momentum**
+- Sentiment score > 0.3 (positive Reddit sentiment)
+- Sentiment rising over 5-day period
+- Mention count > 20 posts (high conviction)
+
+**ML Validation**
+- Ensemble prediction = BUY
+- Confidence > 70%
+- All 3 models agree or strong majority
+
+**Risk Checks**
+- Current positions < 5
+- Portfolio drawdown < 15%
+- Risk/reward ratio > 1:2
+
+### Exit Criteria
+
+1. **Take Profit** - Price hits +7% target
+2. **Stop Loss** - Price hits -5% stop
+3. **Signal Flip** - Technical or sentiment reversal
+4. **Time Decay** - Position held > 7 days
+
+### Risk Management
+
+**Position Sizing Formula:**
+```python
+risk_amount = portfolio * 0.02  # Max 2% risk per trade
+position_size = risk_amount / stop_loss_distance
+position_size = min(position_size, portfolio * 0.20)  # Cap at 20%
+```
+
+**Risk Limits:**
+- Max position: 20% of portfolio
+- Max risk per trade: 2%
+- Stop loss: 5% below entry
+- Max concurrent positions: 5
+- Portfolio drawdown limit: 15%
+
+**Expected Performance:**
+- Win rate: 60-65%
+- Average gain: 5-10% per trade
+- Average loss: <5%
+- Risk/reward: 1:2 minimum
+- Trade frequency: 2-5 per week
 
 ---
 
 ## Repository Structure
 
 ```
-TFT-Sentiment-Trader/
-├── backend/          # FastAPI backend and ML pipeline
-│   ├── api/          # Routes, middleware, entrypoint
-│   ├── services/     # Business logic layer
-│   ├── models/       # ORM models
-│   ├── database/     # DB engine, sessions, migrations
-│   ├── ml/           # Training, inference, models
-│   ├── scrapers/     # Data ingestion workers
-│   ├── utils/        # Shared utilities
-│   └── config/       # Settings and configuration
-│
-├── frontend/         # Next.js dashboard
-│   ├── app/          # App Router pages and layouts
-│   ├── components/   # UI, charts, layout components
-│   ├── hooks/        # Custom React hooks
-│   ├── lib/          # API clients and helpers
-│   └── types/        # Shared TypeScript types
-│
-├── tests/            # Unit and integration tests
-├── scripts/          # Training, scraping, backtesting scripts
-├── data/             # Raw, processed data and model artifacts
-├── docker/           # Docker configuration
-├── logs/             # Application logs
+tft-trader/
+├── backend/
+│   ├── api/                  # FastAPI application
+│   │   ├── main.py           # Entry point
+│   │   ├── routes/           # Endpoint definitions
+│   │   └── schemas/          # Pydantic models
+│   ├── models/               # SQLAlchemy ORM models
+│   │   ├── reddit.py
+│   │   ├── stock.py
+│   │   └── trading_signal.py
+│   ├── scrapers/             # Data collection
+│   │   ├── reddit_scraper.py
+│   │   └── stock_scraper.py
+│   ├── services/             # Business logic
+│   │   ├── reddit_service.py
+│   │   └── stock_service.py
+│   ├── ml/                   # Machine learning
+│   │   ├── models/           # Model architectures
+│   │   ├── training/         # Training scripts
+│   │   └── inference/        # Prediction service
+│   ├── utils/                # Utilities
+│   │   ├── sentiment.py      # VADER analyzer
+│   │   └── logger.py
+│   ├── config/               # Configuration
+│   └── database/             # DB setup
+├── frontend/                 # Next.js application
+│   ├── app/
+│   ├── components/
+│   └── lib/
+├── tests/                    # Tests
+├── scripts/                  # Utility scripts
+├── docs/                     # Documentation
+│   ├── ARCHITECTURE.md
+│   └── TRADING_STRATEGY.md
+├── alembic/                  # Migrations
 ├── docker-compose.yml
-├── Dockerfile
 ├── pyproject.toml
-├── uv.lock
-├── alembic.ini
 └── README.md
 ```
 
 ---
 
-## Core Features
-
-* Real-time Reddit sentiment ingestion with rate limiting
-* Feature engineering over financial time-series data
-* Ensemble ML predictions using TFT, XGBoost, and LightGBM
-* Confidence-based filtering of predictions
-* Regime detection for market context
-* REST APIs for historical data and predictions
-* WebSocket streaming for live price updates
-* Interactive dashboard for visualization and analysis
-
----
-
-## Success Metrics
-
-| Metric                   | Target        |
-| ------------------------ | ------------- |
-| Directional Accuracy     | 72–75 percent |
-| High-Confidence Accuracy | 76–78 percent |
-| API Latency (p95)        | < 200 ms      |
-| Model Training Time      | < 20 minutes  |
-| Service Uptime           | > 99 percent  |
-
----
-
-## Development Setup
+## Getting Started
 
 ### Prerequisites
 
-* Python 3.11+
-* PostgreSQL 15+
-* Redis
-* Node.js 18+
-* Docker (optional but recommended)
+- Python 3.12+
+- PostgreSQL 14+
+- Node.js 20+
+- UV package manager (`pip install uv`)
+- Redis (for Celery task queue)
 
 ### Backend Setup
 
 ```bash
-cd backend
+# Clone repository
+git clone <your-repo-url>
+cd tft-trader
+
+# Install dependencies
 uv sync
-alembic upgrade head
-uvicorn backend.api.main:app --reload
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your database URL, API keys
+
+# Run migrations
+uv run alembic upgrade head
+
+# Start Redis (separate terminal)
+redis-server
+
+# Start Celery worker (separate terminal)
+uv run celery -A backend.tasks worker --loglevel=info
+
+# Start API server
+uv run uvicorn backend.api.main:app --reload
 ```
 
-### Frontend Setup
+**API available at:** http://localhost:8000  
+**Docs:** http://localhost:8000/docs
+
+### Environment Variables
+
+```env
+# Database
+DATABASE_URL=postgresql+asyncpg://user:pass@host:port/dbname
+
+# Reddit API (optional, for live data)
+REDDIT_CLIENT_ID=your_client_id
+REDDIT_CLIENT_SECRET=your_secret
+REDDIT_USER_AGENT=TFTTrader/1.0
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# API Configuration
+API_V1_STR=/api/v1
+PROJECT_NAME=TFT Trader
+```
+
+### Frontend Setup (Coming in Week 7)
 
 ```bash
 cd frontend
@@ -160,26 +303,171 @@ npm install
 npm run dev
 ```
 
-### Environment Variables
+**Dashboard at:** http://localhost:3000
 
-Create a `.env` file based on `.env.example` and configure:
+### Testing
 
-* Database URL
-* Redis URL
-* API keys (Reddit, OpenAI, News API)
+```bash
+# Test stock scraper
+uv run python test_stock_scraper.py
+
+# Run unit tests
+uv run pytest tests/unit/
+
+# Run integration tests
+uv run pytest tests/integration/
+```
 
 ---
 
-## Engineering Principles
+## Development Roadmap
 
-This project follows the same principles used in real backend systems:
+**Week 1-2: Foundation** ✅
+- PostgreSQL setup, Reddit scraper, stock data pipeline, REST API
 
-* Clear separation of concerns (routes, services, data, ML)
-* Async-first architecture
-* Explicit error handling and transaction safety
-* Observability as a first-class concern
-* Infrastructure defined as code
-* Reproducible ML experiments and models
+**Week 3-4: ML Training**
+- Feature engineering, LSTM training, XGBoost/LightGBM, backtesting
+
+**Week 5-6: Trading Logic**
+- Risk manager, signal generation, position sizing, performance tracking
+
+**Week 7-10: Frontend**
+- Dashboard, charts, sentiment timeline, real-time updates
+
+**Week 11-12: Production**
+- Docker, CI/CD, monitoring, deployment
+
+---
+
+## Success Metrics
+
+**Technical Performance**
+- API response time: <200ms
+- Database query time: <50ms
+- Scraper throughput: 100 posts/min
+- System uptime: 99.9%
+
+**ML Performance** (Target on validation set)
+- Prediction accuracy: 65%+
+- Sharpe ratio: >1.5
+- Max drawdown: <15%
+- Win rate: 60-65%
+
+**Trading Performance** (Simulated)
+- Average trade duration: 3-7 days
+- Risk/reward: >1:2
+- ROI: 20-30% annually (target)
+- Consistency: Positive 8/12 months
+
+---
+
+## Tech Stack Details
+
+**Backend Stack:**
+- **FastAPI 0.128.0** - Async REST API with auto docs
+- **SQLAlchemy 2.0.23** - Async ORM with type safety
+- **Alembic 1.12.1** - Database migrations
+- **PostgreSQL** - Primary data store (hosted on Neon)
+- **Celery 5.3.4 + Redis** - Task queue for async scraping
+
+**ML Stack:**
+- **PyTorch 2.1.1** - LSTM for sequence modeling
+- **XGBoost 2.0.2** - Gradient boosting for tabular features
+- **LightGBM 4.1.0** - Fast gradient boosting
+- **pandas-ta 0.4.71b0** - Technical indicator calculations
+- **scikit-learn** - Preprocessing, metrics, model selection
+
+**Data Sources:**
+- **yfinance 1.0** - Stock OHLCV data from Yahoo Finance
+- **PRAW 7.7.1** - Reddit API wrapper
+- **vaderSentiment 3.3.2** - Sentiment analysis with custom lexicon
+
+---
+
+## Project Structure Philosophy
+
+This codebase follows clean architecture principles:
+
+**Separation of Concerns:**
+- `api/` - HTTP layer (routes, schemas, middleware)
+- `services/` - Business logic
+- `models/` - Database models
+- `ml/` - Machine learning pipeline
+- `scrapers/` - Data ingestion
+
+**Async-First:**
+- All I/O operations use `async/await`
+- Database sessions via `AsyncSession`
+- Scraping parallelized with `asyncio.gather()`
+
+**Type Safety:**
+- Pydantic schemas for API validation
+- SQLAlchemy 2.0 typed mappings
+- Full type hints in Python code
+
+**Testing:**
+- Unit tests for utilities and services
+- Integration tests for API endpoints
+- Mocked external dependencies
+
+---
+
+## Learning Outcomes
+
+**Backend Engineering:**
+- Async Python with FastAPI
+- PostgreSQL optimization (indexes, query planning)
+- Database migrations with Alembic
+- Task queues with Celery
+
+**Machine Learning:**
+- Time series forecasting with LSTM
+- Ensemble methods (stacking, voting)
+- Feature engineering for financial data
+- Backtesting and walk-forward validation
+
+**Trading Systems:**
+- Risk management and position sizing
+- Entry/exit signal generation
+- Performance metrics (Sharpe, Sortino, max drawdown)
+- Market regime detection
+
+**Full Stack:**
+- REST API design
+- WebSocket real-time updates
+- React Server Components (Next.js 15)
+- Docker containerization
+- CI/CD with GitHub Actions
+
+---
+
+## Contributing
+
+This is a personal learning project. If you find issues or have suggestions:
+
+1. Open an issue describing the problem
+2. Fork the repo and create a feature branch
+3. Submit a PR with clear description
+
+---
+
+## License
+
+MIT License - see LICENSE file
+
+---
+
+## Acknowledgments
+
+**Data Sources:**
+- Yahoo Finance (via yfinance)
+- Reddit API
+- Financial modeling inspiration from QuantConnect, Zipline
+
+**ML References:**
+- PyTorch documentation
+- XGBoost and LightGBM papers
+- Andrew Ng's ML courses
 
 ---
 
@@ -199,10 +487,4 @@ It is not financial advice and should not be used for live trading without exten
 
 ---
 
-If you want next steps, I strongly recommend:
-
-* Adding a short `ARCHITECTURE.md` explaining system decisions
-* Adding a `DECISIONS.md` (ADR style) documenting trade-offs
-* Writing a one-page “Production Case Study” for interviews
-
-When you’re ready, tell me what you want to build next and we’ll continue at the same engineering bar.
+**Built with ❤️ as a learning project to master ML engineering and quantitative trading**

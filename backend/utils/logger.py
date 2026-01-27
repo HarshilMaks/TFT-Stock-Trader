@@ -7,7 +7,7 @@ log_dir = Path(__file__).resolve().parents[2] / 'logs'
 log_dir.mkdir(exist_ok=True)
 
 
-def get_logger(name: str) -> logging.Logger:
+bbdef get_logger(name: str) -> logging.Logger:
     """
     Get or create a logger with consistent configuration
     
