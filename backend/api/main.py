@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api.routes import posts
+from backend.api.routes import posts, stocks
 from backend.config.settings import settings
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,6 +26,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(posts.router, prefix="/api")
+app.include_router(stocks.router, prefix="/api")
 
 @app.get("/")
 async def root():

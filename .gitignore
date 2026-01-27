@@ -63,6 +63,7 @@ mlartifacts/
 *.swo
 *.swn
 .DS_Store
+.qodo
 
 # Testing
 .pytest_cache/
