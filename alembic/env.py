@@ -16,11 +16,11 @@ from backend.database.config import Base
 from backend.config.settings import settings
 
 # Import all models so alembic can detect them
-# Only import models that exist
 from backend.models.reddit import RedditPost  # noqa: F401
+from backend.models.stock import StockPrice  # noqa: F401
+from backend.models.trading_signal import TradingSignal  # noqa: F401
 # TODO: Import these when created:
 # from backend.models.user import User
-# from backend.models.stock import Stock
 # from backend.models.prediction import Prediction
 
 # this is the Alembic Config object, which provides
