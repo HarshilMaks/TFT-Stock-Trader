@@ -241,12 +241,32 @@ tft-trader/
 ### Prerequisites
 
 - Python 3.12+
-- PostgreSQL 14+
+- PostgreSQL 14+ (or Neon Cloud account for free tier)
 - Node.js 20+
+- Docker & Docker Compose (for local PostgreSQL + Redis)
 - UV package manager (`pip install uv`)
-- Redis (for Celery task queue)
 
-### Backend Setup
+### Quick Setup (Recommended)
+
+```bash
+# Clone repository
+git clone <your-repo-url>
+cd tft-trader
+
+# Run automated setup script
+bash scripts/setup.sh
+
+# Follow prompts to configure credentials
+```
+
+The setup script will:
+- ✅ Create `.env` from template
+- ✅ Install Python dependencies
+- ✅ Start PostgreSQL + Redis with Docker
+- ✅ Run database migrations
+- ✅ Provide next steps
+
+### Manual Backend Setup
 
 ```bash
 # Clone repository
@@ -256,44 +276,57 @@ cd tft-trader
 # Install dependencies
 uv sync
 
-# Configure environment
+# Configure environment (see docs/credentials.md for detailed guide)
 cp .env.example .env
-# Edit .env with your database URL, API keys
+# Edit .env with your credentials
 
 # Run migrations
 uv run alembic upgrade head
 
-# Start Redis (separate terminal)
-redis-server
-
 # Start Celery worker (separate terminal)
-uv run celery -A backend.tasks worker --loglevel=info
+celery -A backend.celery_app worker --loglevel=info
 
 # Start API server
 uv run uvicorn backend.api.main:app --reload
 ```
 
 **API available at:** http://localhost:8000  
-**Docs:** http://localhost:8000/docs
+**API Docs:** http://localhost:8000/docs  
+**ReDoc:** http://localhost:8000/redoc
 
-### Environment Variables
+### Environment Configuration
+
+> **📖 Full guide:** See [`docs/credentials.md`](docs/credentials.md) for detailed setup instructions for each credential.
+
+#### Required Credentials
 
 ```env
-# Database
-DATABASE_URL=postgresql+asyncpg://user:pass@host:port/dbname
+# PostgreSQL Database (local or cloud)
+DATABASE_URL=postgresql://user:pass@localhost:5432/stockmarket
 
-# Reddit API (optional, for live data)
-REDDIT_CLIENT_ID=your_client_id
-REDDIT_CLIENT_SECRET=your_secret
-REDDIT_USER_AGENT=TFTTrader/1.0
-
-# Redis
+# Redis (local or cloud)
 REDIS_URL=redis://localhost:6379/0
 
-# API Configuration
-API_V1_STR=/api/v1
-PROJECT_NAME=TFT Trader
+# Reddit API (get from reddit.com/prefs/apps)
+REDDIT_CLIENT_ID=your_reddit_client_id
+REDDIT_CLIENT_SECRET=your_reddit_client_secret
+REDDIT_USER_AGENT=TFT-Trader/1.0 (by your_username)
+
+# Security
+SECRET_KEY=generate_with_secrets.token_urlsafe(32)
 ```
+
+#### Optional Credentials
+
+```env
+# Error tracking
+SENTRY_DSN=https://key@sentry.io/project_id
+
+# Monitoring
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+```
+
+**Full reference:** See [`.env.example`](.env.example) with inline documentation
 
 ### Frontend Setup (Coming in Week 7)
 

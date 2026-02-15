@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, text, func
 from backend.models.reddit import RedditPost
@@ -6,6 +6,19 @@ from backend.database.config import get_db
 from backend.api.schemas.posts import PostListResponse, PostByTickerResponse, TrendingResponse, TickerSentiment
 from backend.api.middleware.rate_limit import check_rate_limit
 from backend.config.rate_limits import RATE_LIMITS, get_period_seconds
+from backend.scrapers.reddit_scraper import RedditScraper
+from backend.utils.logger import get_logger
+from pydantic import BaseModel
+
+logger = get_logger(__name__)
+
+# Response model for scrape endpoint
+class ScrapeResponse(BaseModel):
+    subreddit: str
+    fetched: int
+    saved: int
+    skipped: int
+    message: str
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -139,9 +152,158 @@ async def rate_limit_posts_sentiment(request: Request):
     )
 
 
+async def rate_limit_posts_scrape(request: Request):
+    """
+    Rate limit: POST /posts/scrape/{subreddit} endpoint
+    
+    Limit: 5 requests per hour per IP address
+    
+    Rationale:
+    - This is an expensive API call to Reddit
+    - Rate limited by Reddit (60 requests per minute max)
+    - Each scrape call fetches 100+ posts
+    - Should NOT be called frequently by one user
+    - Reserved for manual testing / admin only
+    
+    Endpoint cost: 🔴 HIGH (external API call, network I/O)
+    """
+    config = RATE_LIMITS.get("posts:scrape")
+    if not config:
+        # Fallback if config not found
+        config_requests = 5
+        config_period = "hour"
+    else:
+        config_requests = config.requests
+        config_period = config.period
+    
+    period_seconds = get_period_seconds(config_period)
+    
+    return await check_rate_limit(
+        request=request,
+        endpoint_key="posts:scrape",
+        limit=config_requests,
+        period_seconds=period_seconds
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # ENDPOINTS WITH RATE LIMITING
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
+@router.post("/scrape/{subreddit}", response_model=ScrapeResponse)
+async def scrape_subreddit(
+    subreddit: str,
+    limit: int = Query(100, ge=10, le=500),
+    db: AsyncSession = Depends(get_db),
+    _rate_limit = Depends(rate_limit_posts_scrape)
+) -> ScrapeResponse:
+    """
+    Manually trigger Reddit scraping for a specific subreddit.
+    
+    **IMPORTANT**: This endpoint calls the real Reddit API.
+    - Rate limited: 5 times per hour per IP address
+    - Each call fetches up to {limit} posts from subreddit
+    - Posts with duplicates will be skipped
+    
+    Usage:
+        POST /api/posts/scrape/wallstreetbets?limit=100
+    
+    Response:
+        {
+            "subreddit": "wallstreetbets",
+            "fetched": 100,
+            "saved": 85,
+            "skipped": 15,
+            "message": "Successfully scraped r/wallstreetbets"
+        }
+    
+    Args:
+        subreddit: Name of subreddit (without 'r/' prefix)
+        limit: Number of posts to fetch (10-500, default 100)
+    
+    Returns:
+        ScrapeResponse with count of fetched, saved, and skipped posts
+    
+    Raises:
+        HTTPException 429: Rate limit exceeded
+        HTTPException 500: Reddit API error or database error
+    """
+    try:
+        logger.info(f"🔄 Starting scrape for r/{subreddit} (limit={limit})")
+        
+        # Step 1: Scrape from Reddit
+        scraper = RedditScraper()
+        posts = scraper.scrape_posts(subreddit, limit=limit)
+        
+        if not posts:
+            return ScrapeResponse(
+                subreddit=subreddit,
+                fetched=0,
+                saved=0,
+                skipped=0,
+                message=f"No posts found in r/{subreddit}"
+            )
+        
+        logger.info(f"✅ Fetched {len(posts)} posts from r/{subreddit}")
+        
+        # Step 2: Check for duplicates and save to database
+        saved_count = 0
+        skipped_count = 0
+        
+        for post_data in posts:
+            try:
+                # Check if post already exists
+                existing = await db.execute(
+                    select(RedditPost).where(RedditPost.post_id == post_data['post_id'])
+                )
+                
+                if existing.scalar_one_or_none():
+                    skipped_count += 1
+                    logger.debug(f"⏭️  Skipped duplicate post: {post_data['post_id']}")
+                    continue
+                
+                # Create new post record
+                reddit_post = RedditPost(
+                    post_id=post_data['post_id'],
+                    subreddit=post_data['subreddit'],
+                    title=post_data['title'],
+                    body=post_data['body'],
+                    author=post_data['author'],
+                    score=post_data['score'],
+                    num_comments=post_data['num_comments'],
+                    upvote_ratio=post_data['upvote_ratio'],
+                    created_at=post_data['created_at'],
+                    url=post_data['url'],
+                    is_self=post_data['is_self'],
+                    link_flair_text=post_data['link_flair_text'],
+                    tickers=[],  # Will be extracted by sentiment service
+                    sentiment_score=None  # Will be calculated by sentiment service
+                )
+                
+                db.add(reddit_post)
+                saved_count += 1
+                logger.debug(f"✏️  Added post: {post_data['post_id']}")
+                
+            except Exception as e:
+                logger.error(f"❌ Error saving post {post_data.get('post_id')}: {e}")
+                continue
+        
+        # Step 3: Commit all saves
+        await db.commit()
+        logger.info(f"✅ Saved {saved_count} posts to database")
+        
+        return ScrapeResponse(
+            subreddit=subreddit,
+            fetched=len(posts),
+            saved=saved_count,
+            skipped=skipped_count,
+            message=f"Successfully scraped r/{subreddit}: {saved_count} new posts saved"
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Error scraping r/{subreddit}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to scrape r/{subreddit}: {str(e)}")
 
 
 @router.get("/", response_model=PostListResponse)

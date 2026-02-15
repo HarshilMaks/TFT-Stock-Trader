@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime
 from typing import List, Dict, Optional
 from backend.utils.logger import logger
+from backend.utils.retry import retry_with_backoff, YFINANCE_CONFIG, should_retry
 
 
 class StockScraper:
@@ -27,6 +28,7 @@ class StockScraper:
             ticker, period, calculate_indicators
         )
     
+    @retry_with_backoff(config=YFINANCE_CONFIG)
     def _fetch_sync(self, ticker: str, period: str, calc_indicators: bool) -> List[Dict]:
         """Synchronous fetching (runs in thread pool)"""
         try:
@@ -95,6 +97,10 @@ class StockScraper:
             return prices
             
         except Exception as e:
+            # Re-raise transient errors so the retry decorator can handle them
+            if should_retry(e):
+                raise  # Let the decorator retry
+            # For permanent errors (404, 401, etc.), log and return empty list
             logger.error(f"Error fetching {ticker}: {e}", exc_info=True)
             return []
     
@@ -132,6 +138,7 @@ class StockScraper:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._get_price_sync, ticker)
     
+    @retry_with_backoff(config=YFINANCE_CONFIG)
     def _get_price_sync(self, ticker: str) -> Optional[float]:
         """Synchronous price fetching"""
         try:
@@ -148,5 +155,9 @@ class StockScraper:
             return float(price) if price else None
             
         except Exception as e:
+            # Re-raise transient errors so the retry decorator can handle them
+            if should_retry(e):
+                raise  # Let the decorator retry
+            # For permanent errors, log and return None
             logger.error(f"Failed to get price for {ticker}: {e}")
             return None

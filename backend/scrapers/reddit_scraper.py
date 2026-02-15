@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Literal, Optional
 from dotenv import load_dotenv
 from backend.utils.logger import get_logger
+from backend.utils.retry import retry_with_backoff, REDDIT_CONFIG
 
 load_dotenv()
 
@@ -30,6 +31,7 @@ class RedditScraper:
             user_agent=os.getenv('REDDIT_USER_AGENT')
         )
     
+    @retry_with_backoff(config=REDDIT_CONFIG)
     def scrape_posts(
         self, 
         subreddit_name: str, 
@@ -110,6 +112,7 @@ class RedditScraper:
             logger.error(f"Failed to scrape r/{subreddit_name}: {e}")
             return []
     
+    @retry_with_backoff(config=REDDIT_CONFIG)
     def get_post_comments(
         self, 
         post_id: str, 

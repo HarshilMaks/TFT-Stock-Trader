@@ -75,6 +75,12 @@ RATE_LIMITS: Dict[str, RateLimitConfig] = {
         description="Aggregate sentiment - AVG, COUNT, SUM calculations"
     ),
     
+    "posts:scrape": RateLimitConfig(
+        requests=5,
+        period="hour",
+        description="Manual Reddit scraping - calls external Reddit API (expensive, use sparingly)"
+    ),
+    
     # ═══════════════════════════════════════════════════════════════════════════
     # 💹 STOCKS ENDPOINTS (Market data - read-heavy, heavily cached)
     # ═══════════════════════════════════════════════════════════════════════════
