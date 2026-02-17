@@ -1,0 +1,197 @@
+version: '3.9'
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TFT Trader — Docker Compose for Cloud Development
+# ═════════════════════════════════════════════════════════════════════════════
+# 
+# This compose file sets up a containerized development environment with:
+# - Celery worker (executes scraping & ML tasks)
+# - Celery Beat scheduler (schedules tasks on cron-like schedule)
+# - Flower (UI for monitoring Celery)
+#
+# Database & Redis use cloud services (Neon + Redis Cloud)
+#
+# Quick start:
+#   docker-compose -f docker-compose.dev.yml up -d
+#   docker-compose -f docker-compose.dev.yml logs -f celery_worker
+#
+# Environment variables loaded from .env file in project root
+# See .env.example for required variables
+# ═════════════════════════════════════════════════════════════════════════════
+
+services:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Celery Worker — Executes scraping and ML tasks
+  # ───────────────────────────────────────────────────────────────────────────
+  celery_worker:
+    build:
+      context: ..  # Build from parent directory
+      dockerfile: docker/Dockerfile
+      target: development
+    container_name: tft-celery-worker
+    command: celery -A backend.celery_app worker --loglevel=info --concurrency=2 --queues=scraping,ml --without-gossip --without-mingle --without-heartbeat
+    env_file:
+      - ../.env  # Load all variables from .env
+    environment:
+      # Override/ensure these are set
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      # Code hot-reload during development
+      - ../backend:/app/backend
+      - ../scripts:/app/scripts
+      # Logs persistent directory
+      - celery_logs:/app/logs
+    networks:
+      - tft-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Celery Beat — Scheduler for periodic tasks
+  # ───────────────────────────────────────────────────────────────────────────
+  celery_beat:
+    build:
+      context: ..  # Build from parent directory
+      dockerfile: docker/Dockerfile
+      target: development
+    container_name: tft-celery-beat
+    command: celery -A backend.celery_app beat --loglevel=info --scheduler=celery.beat:PersistentScheduler
+    env_file:
+      - ../.env  # Load all variables from .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Code hot-reload during development
+      - ../backend:/app/backend
+      # Schedule file persistence
+      - ./docker/celerybeat-schedule:/app/celerybeat-schedule
+      # Logs persistent directory
+      - celery_logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - tft-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Flower — Celery Monitoring UI (Optional but recommended)
+  # ───────────────────────────────────────────────────────────────────────────
+  flower:
+    image: mher/flower:2.0
+    container_name: tft-flower
+    env_file:
+      - ../.env  # Load for variable expansion
+    command: celery --broker=${CELERY_BROKER_URL} --port=5555
+    ports:
+      - "5555:5555"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - tft-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5555"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Volumes — Data persistence
+# ═════════════════════════════════════════════════════════════════════════════
+volumes:
+  celery_logs:
+    driver: local
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Networks — Allow containers to communicate
+# ═════════════════════════════════════════════════════════════════════════════
+networks:
+  tft-network:
+    driver: bridge
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Cloud Deployment Notes
+# ═════════════════════════════════════════════════════════════════════════════
+# 
+# ENVIRONMENT SETUP:
+# 1. DATABASE_URL:
+#    - Uses Neon PostgreSQL (sslmode=require, channel_binding=require)
+#    - Example: postgresql://user:pass@host.region.aws.neon.tech/dbname?sslmode=require
+# 
+# 2. REDIS_URL:
+#    - Uses Redis Cloud or Upstash (managed Redis)
+#    - Example: redis://default:password@host:port/0
+#
+# 3. CELERY_BROKER_URL & CELERY_RESULT_BACKEND:
+#    - Usually same as REDIS_URL
+#
+# RESOURCE LIMITS:
+# - Celery Worker: 1 CPU, 1GB RAM (adjustable for your workload)
+# - Celery Beat: 0.5 CPU, 512MB RAM (scheduler, lightweight)
+# - Flower: 0.5 CPU, 512MB RAM (monitoring UI)
+#
+# DEPLOYMENT OPTIONS:
+# - Docker Compose: For development/testing
+# - Kubernetes: For production (convert with Kompose or Helm)
+# - Docker Swarm: For multi-machine deployment
+# - AWS ECS/EKS: For AWS cloud-native deployment
+# - Azure Container Instances: For serverless container running
+#
+# PRODUCTION CHECKLIST:
+# ✓ Use .env files (never commit secrets)
+# ✓ Resource limits set (prevent runaway containers)
+# ✓ Restart policies configured (unless-stopped)
+# ✓ Logging configured (json-file with rotation)
+# ✓ Cloud-native services only (no local containers)
+# ✓ Celery optimizations (--without-gossip, --without-mingle)
+# ✓ Health checks for monitoring services
+#
+# SCALING FOR PRODUCTION:
+# - Run multiple celery_worker instances with different queues
+# - Use Docker secrets for sensitive data (in Swarm/K8s)
+# - Configure autoscaling based on queue depth
+# - Add monitoring (Prometheus + Grafana)
+# - Implement log aggregation (ELK, Datadog, etc.)
+#
+# QUICK START:
+# 1. Copy .env.example to .env and fill in credentials
+# 2. Build and start: docker-compose -f docker-compose.dev.yml up -d
+# 3. Monitor: docker-compose -f docker-compose.dev.yml logs -f celery_worker
+# 4. View Flower UI: http://localhost:5555
+# 5. Stop: docker-compose -f docker-compose.dev.yml down
+# ═════════════════════════════════════════════════════════════════════════════
