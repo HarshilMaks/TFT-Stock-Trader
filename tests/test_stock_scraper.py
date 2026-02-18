@@ -6,7 +6,7 @@ Usage:
 """
 
 import asyncio
-from backend.database.session import AsyncSessionLocal
+from backend.database.config import AsyncSessionLocal
 from backend.services.stock_service import StockService
 
 

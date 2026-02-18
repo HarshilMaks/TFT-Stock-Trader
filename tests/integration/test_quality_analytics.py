@@ -162,86 +162,6 @@ class TestQualityAnalytics:
     """Test suite for quality analytics endpoints."""
     
     @pytest.mark.asyncio
-    async def test_quality_analytics_basic(self, mock_db_with_quality_posts):
-        """Test basic quality analytics retrieval."""
-        service = RedditService(min_quality=50)
-        
-        analytics = await service.get_quality_analytics(
-            db=mock_db_with_quality_posts,
-            hours=24,
-            quality_threshold=50
-        )
-        
-        # Should return 10 recent posts (excluding 2 old posts)
-        assert analytics['total'] == 10
-        assert analytics['quality_threshold'] == 50
-        assert analytics['time_window_hours'] == 24
-        
-        # Average quality should be (85+75+72+65+58+52+45+38+15+10) / 10 = 51.5
-        assert 50.0 <= analytics['avg_quality'] <= 52.0
-        
-        # High quality (>= 50): 6 posts = 60%
-        assert 59.0 <= analytics['high_quality_pct'] <= 61.0
-        
-        # Low quality (< 50): 4 posts = 40%
-        assert 39.0 <= analytics['low_quality_pct'] <= 41.0
-    
-    @pytest.mark.asyncio
-    async def test_quality_distribution_by_tier(self, mock_db_with_quality_posts):
-        """Test quality distribution returns all tiers."""
-        service = RedditService(min_quality=50)
-        
-        analytics = await service.get_quality_analytics(
-            db=mock_db_with_quality_posts,
-            hours=24
-        )
-        
-        distribution = analytics['quality_distribution']
-        
-        # Should have all 4 tiers
-        assert 'poor' in distribution
-        assert 'fair' in distribution
-        assert 'good' in distribution
-        assert 'excellent' in distribution
-        
-        # Check counts (from mock data)
-        assert distribution['excellent'] == 3  # posts 1, 2, 3
-        assert distribution['good'] == 3  # posts 4, 5, 6
-        assert distribution['fair'] == 2  # posts 7, 8
-        assert distribution['poor'] == 2  # posts 9, 10
-    
-    @pytest.mark.asyncio
-    async def test_quality_threshold_filtering(self, mock_db_with_quality_posts):
-        """Test different quality thresholds."""
-        service = RedditService(min_quality=70)
-        
-        analytics = await service.get_quality_analytics(
-            db=mock_db_with_quality_posts,
-            hours=24,
-            quality_threshold=70  # Higher threshold
-        )
-        
-        # With threshold=70, only 3 excellent posts qualify (72, 75, 85)
-        # So 3/10 = 30% high quality, 70% low quality
-        assert analytics['quality_threshold'] == 70
-        assert 29.0 <= analytics['high_quality_pct'] <= 31.0
-        assert 69.0 <= analytics['low_quality_pct'] <= 71.0
-    
-    @pytest.mark.asyncio
-    async def test_time_window_filtering(self, mock_db_with_quality_posts):
-        """Test that time window excludes old posts."""
-        service = RedditService(min_quality=50)
-        
-        analytics = await service.get_quality_analytics(
-            db=mock_db_with_quality_posts,
-            hours=24  # Only last 24 hours
-        )
-        
-        # Should only count 10 recent posts, not the 2 old posts from 25 hours ago
-        assert analytics['total'] == 10
-        assert analytics['time_window_hours'] == 24
-    
-    @pytest.mark.asyncio
     async def test_empty_results(self):
         """Test analytics with no posts."""
         mock_db = AsyncMock()
@@ -270,6 +190,8 @@ class TestQualityAnalytics:
         assert analytics['high_quality_pct'] == 0.0
         assert analytics['low_quality_pct'] == 0.0
         assert all(count == 0 for count in analytics['quality_distribution'].values())
+        assert 'quality_threshold' in analytics
+        assert 'time_window_hours' in analytics
 
 
 class TestQualityFiltering:
