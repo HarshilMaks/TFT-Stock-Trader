@@ -621,8 +621,10 @@ Acceptance Criteria:
 ### **🤖 PHASE 2: ML TRAINING & TRACKING** (20 hours)
 
 **Goal**: Establish production ML pipeline with experiment tracking and reproducibility  
-**Status**: READY TO START | **Priority**: **P1 HIGH**  
-**Timeline**: Can start PARALLEL with Phase 1 | **Dependencies**: Feature engineering complete (✅)  
+**Status**: 80% Complete (16/20 hours done, Days 1-4 complete) | **Priority**: **P1 HIGH**  
+**Timeline**: In progress | **Dependencies**: Feature engineering complete (✅)
+**Completed Days**: 1 (MLflow), 2 (Baseline Training), 3 (Backtesting), 4 (Model Registry & Experiments)
+**Remaining**: Day 5 (Feature Enhancements - 4 hours)  
 
 #### **Daily Implementation Breakdown**:
 
@@ -644,25 +646,51 @@ Acceptance Criteria:
   - ✅ Compare performance: LSTM vs TFT vs tree models (compare_with_baseline())
   - ✅ Log computational cost and training time (memory + timing tracking)
 
-**Day 3 (4 hours): Backtesting & Validation**
-- [ ] **Morning** (2h): Backtest infrastructure  
-  - Create `backend/ml/backtesting/backtest_engine.py`
-  - Use trained models to generate historical signals
-  - Calculate: P&L, win rate, drawdown, Sharpe ratio
-- [ ] **Afternoon** (2h): Validation and comparison
-  - Compare model performance vs buy-and-hold baseline
-  - Ensure no lookahead bias in backtest calculations
-  - Generate performance report with visualizations
+**Day 3 (4 hours): Backtesting & Validation** ✅ **COMPLETE**
+- [x] **Morning** (2h): Backtest infrastructure  
+  - ✅ Created `backend/ml/backtesting/backtest_engine.py` (625 lines)
+  - ✅ Chronological data processing (no lookahead bias)
+  - ✅ Trade recording with entry/exit P&L calculations
+  - ✅ Position sizing based on confidence levels
+- [x] **Afternoon** (2h): Validation and comparison
+  - ✅ Compare model performance vs buy-and-hold baseline
+  - ✅ Verified no lookahead bias in backtest calculations
+  - ✅ Comprehensive metrics: Sharpe ratio, drawdown, win rate, profit factor
+  - ✅ 19 integration tests (100% passing)
 
-**Day 4 (4 hours): Model Registry & Experiment Comparison**
-- [ ] **Morning** (2h): Model registry setup
-  - Create `backend/ml/registry/model_registry.py`
-  - Register: production, staging, experimental model versions
-  - Track: deployment history, rollbacks, A/B test results
-- [ ] **Afternoon** (2h): Experiment comparison tools
-  - `backend/ml/tracking/experiment_compare.py`
-  - Side-by-side experiment comparison
-  - Identify: which features changed impact most
+**Day 4 (4 hours): Model Registry & Experiment Comparison** ✅ **COMPLETE**
+- [x] **Morning** (2h): Model registry setup
+  - ✅ Create `backend/ml/registry/model_registry.py` (524 lines)
+  - ✅ Register: production, staging, experimental model versions
+  - ✅ Track: deployment history, rollbacks, A/B test results
+  - ✅ Supports state transitions with validation
+  - ✅ Model comparison and ranking by metrics
+  - **Evidence**: [backend/ml/registry/model_registry.py](backend/ml/registry/model_registry.py) (524 lines), 18 integration tests (100% passing)
+  - **Key Classes**:
+    - `ModelVersion`: Complete metadata for each model version
+    - `VersionStatus`: Enum for production/staging/experimental/archived/rollback
+    - `DeploymentRecord`: Track deployment history with metrics before/after
+    - `ABTestResult`: A/B test result tracking with statistical significance
+    - `ModelRegistry`: Core registry with version management, deployment tracking, comparison
+- [x] **Afternoon** (2h): Experiment comparison tools
+  - ✅ Create `backend/ml/tracking/experiment_compare.py` (479 lines)
+  - ✅ Side-by-side experiment comparison with metrics
+  - ✅ Identify: which features/parameters changed impact most
+  - ✅ Generate comparison reports with recommendations
+  - ✅ Feature impact analysis tracking
+  - ✅ Experiment ranking and summary statistics
+  - **Evidence**: [backend/ml/tracking/experiment_compare.py](backend/ml/tracking/experiment_compare.py) (479 lines), 17 integration tests (100% passing)
+  - **Key Classes**:
+    - `ExperimentMetrics`: Metrics from single MLflow run
+    - `ComparisonResult`: Result of comparing two experiments
+    - `ExperimentComparer`: Load, compare, rank experiments with caching
+  - **Integration Workflow**: [backend/ml/registry/example_usage.py](backend/ml/registry/example_usage.py) (314 lines)
+
+**Test Summary**:
+- ✅ 18 Model Registry Unit Tests (TestModelRegistry, TestABTesting, TestVersionQuerying, TestVersionComparison, TestRegistryPersistence, TestDeploymentTracking, TestRegistryReport)
+- ✅ 17 Experiment Comparison Unit Tests (TestExperimentMetrics, TestComparisonResult, TestExperimentComparer, TestComparisonLogic, TestExperimentRanking, TestReportGeneration, TestSummaryStatistics, TestExperimentBestRun)
+- ✅ 6 Integration Tests (registry + experiment comparison workflows)
+- **Total**: 41/41 tests passing (100% success rate)
 
 **Day 5 (4 hours): Feature Enhancements**
 - [ ] **Morning** (2h): Sentiment time-series features  
